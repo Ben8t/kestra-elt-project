@@ -1,0 +1,28 @@
+id: monitoring
+namespace: kestra.weather
+
+labels:
+  kind: monitoring
+
+tasks:
+  - id: send
+    type: io.kestra.plugin.notifications.mail.MailExecution
+    from: onboardin@resend.dev
+    to: benoit@kestra.io
+    username: resend
+    password: "{{ secret('RESEND_API') }}"
+    host: smtp.resend.com
+    port: 465
+    executionId: "{{ trigger.executionId }}"
+
+triggers:
+  - id: listen
+    type: io.kestra.plugin.core.trigger.Flow
+    conditions:
+      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
+        in:
+          - FAILED
+          - WARNING
+      - type: io.kestra.plugin.core.condition.ExecutionNamespaceCondition
+        namespace: kestra.weather
+        prefix: true
