@@ -9,11 +9,12 @@ inputs:
     required: true
     
   - id: city
-    type: ENUM
+    type: SELECT
     values:
       - Berlin
       - Paris
       - "New York"
+    required: true
 
 tasks:
 
@@ -33,28 +34,23 @@ tasks:
 
 
   - id: normalize_data
-    type: io.kestra.plugin.scripts.python.Script
-    warningOnStdErr: false
-    beforeCommands:
-      - pip install pandas
+    type: io.kestra.plugin.jdbc.duckdb.Query
+    store: true
     inputFiles:
       data.json: "{{ outputs.download_weather_data.uri }}"
-    script: |
-      import json
-      import pandas as pd
-
-      with open('data.json') as fopen:
-        data = json.load(fopen)
-
-      (
-        pd.DataFrame(data.get("hourly"))
-        .assign(
-          latitude=data.get("latitude"), 
-          longitude=data.get("longitude"),
-          city="{{inputs.city}}"
-        )
-        .to_csv("result.csv", index=False)
-      )
+    sql: |
+      INSTALL json;
+      LOAD json;
+      COPY(
+        SELECT
+          unnest(hourly.time) AS time,
+          unnest(hourly.temperature_2m) AS temperature_2m,
+          '{{inputs.city}}' AS city,
+          latitude AS latitude,
+          longitude AS longitude
+        FROM '{{workingDir}}/data.json'
+      ) TO 
+      '{{outputFiles["result.csv"]}}' (HEADER, DELIMITER ',');
     outputFiles:
       - result.csv
       
