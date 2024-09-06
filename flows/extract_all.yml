@@ -1,0 +1,25 @@
+id: extract_all
+namespace: kestra.weather
+
+labels:
+  kind: control
+
+tasks:
+
+  - id: run_extract
+    type: io.kestra.plugin.core.flow.ForEach
+    values: '["Paris", "Berlin"]'
+    tasks:
+
+      - id: subflow
+        type: io.kestra.plugin.core.flow.Subflow
+        namespace: kestra.weather
+        flowId: extract
+        inputs:
+          time: '{{ trigger.date ?? now() | date("yyyy-MM-dd") }}'
+          city: "{{ taskrun.value }}"
+
+triggers:
+  - id: schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "@daily"
