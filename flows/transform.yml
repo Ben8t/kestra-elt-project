@@ -1,0 +1,45 @@
+id: transform
+namespace: kestra.weather
+
+tasks:
+  - id: git
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    tasks:
+      - id: clone_repository
+        type: io.kestra.plugin.git.Clone
+        url: https://github.com/Ben8t/dbt_weather.git
+        branch: main
+
+      - id: dbt
+        type: io.kestra.plugin.dbt.cli.DbtCLI
+        containerImage: ghcr.io/kestra-io/dbt
+        beforeCommands:
+          - pip install dbt-postgres
+        profiles: |
+          dbt_weather:
+            outputs:
+              dev:
+                type: postgres
+                host: "{{ secret('POSTGRES_HOST') }}"
+                user: "{{ secret('POSTGRES_USERNAME') }}"
+                password: "{{ secret('POSTGRES_PASSWORD') }}"
+                port: 5432
+                dbname: kestra
+                schema: data
+                threads: 8
+                connect_timeout: 10
+            target: dev
+        commands:
+          - dbt deps
+          - dbt build
+      
+triggers:
+  - id: listen-flow
+    type: io.kestra.plugin.core.trigger.Flow
+    conditions:
+      - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
+        namespace: kestra.weather
+        flowId: load
+      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
+        in:
+          - SUCCESS

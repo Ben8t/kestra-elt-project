@@ -1,0 +1,74 @@
+id: load
+namespace: kestra.weather
+
+
+inputs:
+  - id: data
+    type: URI
+
+tasks:
+
+  - id: ddl_queries
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    sql: |
+      -- DROP SCHEMA IF EXISTS weather CASCADE;
+      CREATE SCHEMA IF NOT EXISTS weather;
+      CREATE TABLE IF NOT EXISTS weather.tmp (
+        "time" VARCHAR,
+        "temperature_2m" VARCHAR,
+        "latitude" VARCHAR,
+        "longitude" VARCHAR,
+        "city" VARCHAR
+      );
+
+      CREATE TABLE IF NOT EXISTS weather.temperature (
+        "time" VARCHAR,
+        "temperature_2m" VARCHAR,
+        "latitude" VARCHAR,
+        "longitude" VARCHAR,
+        "city" VARCHAR,
+        primary key(time, city)
+      );
+
+
+  - id: ingest
+    type: io.kestra.plugin.jdbc.postgresql.CopyIn
+    format: CSV
+    from: "{{ inputs.data }}"
+    table: weather.tmp
+    header: true
+
+  - id: upsert
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    sql: |
+      INSERT INTO weather.temperature (time, temperature_2m, latitude, longitude, city)
+      SELECT DISTINCT * FROM weather.tmp
+      ON CONFLICT (time, city) DO UPDATE
+      SET time = excluded.time, temperature_2m = excluded.temperature_2m, latitude = excluded.latitude, longitude = excluded.longitude, city = excluded.city;
+      DROP TABLE IF EXISTS weather.tmp;
+
+  - id: query
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    sql: |
+      SELECT * FROM weather.temperature
+    store: true
+
+triggers:
+  - id: listen-flow
+    type: io.kestra.plugin.core.trigger.Flow
+    inputs:
+      data: '{{ outputs.normalize_data.outputFiles["result.csv"] }}'
+    conditions:
+      - type: io.kestra.plugin.core.condition.ExecutionFlowCondition
+        namespace: kestra.weather
+        flowId: extract
+      - type: io.kestra.plugin.core.condition.ExecutionStatusCondition
+        in:
+          - SUCCESS
+
+pluginDefaults:
+  - type: io.kestra.plugin.jdbc.postgresql
+    values:
+      url: "jdbc:postgresql://{{ secret('POSTGRES_HOST') }}/data"
+      username: "{{ secret('POSTGRES_USERNAME') }}"
+      password: "{{ secret('POSTGRES_PASSWORD') }}"
