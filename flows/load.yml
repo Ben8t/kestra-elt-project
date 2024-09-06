@@ -13,7 +13,7 @@ tasks:
     sql: |
       -- DROP SCHEMA IF EXISTS weather CASCADE;
       CREATE SCHEMA IF NOT EXISTS weather;
-      CREATE TABLE IF NOT EXISTS weather.tmp (
+      CREATE TABLE IF NOT EXISTS weather.{{flow.id}}_{{ execution.id }} (
         "time" VARCHAR,
         "temperature_2m" VARCHAR,
         "latitude" VARCHAR,
@@ -35,17 +35,17 @@ tasks:
     type: io.kestra.plugin.jdbc.postgresql.CopyIn
     format: CSV
     from: "{{ inputs.data }}"
-    table: weather.tmp
+    table: weather.{{flow.id}}_{{ execution.id }}
     header: true
 
   - id: upsert
     type: io.kestra.plugin.jdbc.postgresql.Query
     sql: |
       INSERT INTO weather.temperature (time, temperature_2m, latitude, longitude, city)
-      SELECT DISTINCT * FROM weather.tmp
+      SELECT DISTINCT * FROM weather.{{flow.id}}_{{ execution.id }}
       ON CONFLICT (time, city) DO UPDATE
       SET time = excluded.time, temperature_2m = excluded.temperature_2m, latitude = excluded.latitude, longitude = excluded.longitude, city = excluded.city;
-      DROP TABLE IF EXISTS weather.tmp;
+      DROP TABLE IF EXISTS weather.{{flow.id}}_{{ execution.id }};
 
   - id: query
     type: io.kestra.plugin.jdbc.postgresql.Query
