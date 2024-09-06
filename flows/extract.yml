@@ -45,13 +45,11 @@ tasks:
         SELECT
           unnest(hourly.time) AS time,
           unnest(hourly.temperature_2m) AS temperature_2m,
-          '{{inputs.city}}' AS city,
           latitude AS latitude,
-          longitude AS longitude
+          longitude AS longitude,
+          '{{inputs.city}}' AS city
         FROM '{{workingDir}}/data.json'
       ) TO 
       '{{outputFiles["result.csv"]}}' (HEADER, DELIMITER ',');
     outputFiles:
       - result.csv
-      
-
