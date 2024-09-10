@@ -13,14 +13,16 @@ This repository is a self-contained project exploring a full ELT project using K
 
 2️⃣ Get a Resent API key: create a [Resend account](https://resend.com/) and go to [API keys](https://resend.com/api-keys).
 
-3️⃣ Fill a `.env` file (you can see an example in the `.env.template`). All values should be encoded in base64. You can find more information in [Kestra Secret documentation](https://kestra.io/docs/concepts/secret).
+3️⃣ Run Kestra: `docker-compose up -d` and open your web browser at http://localhost:8080, you should see the Kestra UI.
 
-4️⃣ Run Kestra: `docker-compose up -d` and open your web browser at http://localhost:8080, you should see the Kestra UI.
-
-5️⃣ Deploy all resources with Terraform:
+4️⃣ Deploy all resources with Terraform:
 * `terraform init`
 * `terraform plan` to check all the resources that will be deployed (Neon project and Kestra flows).
 * `terraform apply`
+
+5️⃣ Fill a `.env` file (you can see an example in the `.env.template`). All values should be encoded in base64. You can find more information in [Kestra Secret documentation](https://kestra.io/docs/concepts/secret). You can find all Postgres information into your Neon account where a new project has been deployed with Terraform (project should be `kestra_elt` and database branch is `prod`).
+
+6️⃣ Restart the Kestra instance configuraiton is updated.
 
 ## Run backfill
 
