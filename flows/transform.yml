@@ -1,6 +1,10 @@
 id: transform
 namespace: kestra.weather
 
+concurrency:
+  behavior: QUEUE
+  limit: 1
+
 tasks:
   - id: git
     type: io.kestra.plugin.core.flow.WorkingDirectory
