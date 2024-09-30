@@ -20,9 +20,13 @@ This repository is a self-contained project exploring a full ELT project using K
 * `terraform plan` to check all the resources that will be deployed (Neon project and Kestra flows).
 * `terraform apply`
 
-5️⃣ Fill a `.env` file (you can see an example in the `.env.template`). All values should be encoded in base64. You can find more information in [Kestra Secret documentation](https://kestra.io/docs/concepts/secret). You can find all Postgres information into your Neon account where a new project has been deployed with Terraform (project should be `kestra_elt` and database branch is `prod`).
+5️⃣ Fill a `.env` file (you can see an example in the `.env.template`). All values should be encoded in base64. You can find more information in [Kestra Secret documentation](https://kestra.io/docs/concepts/secret). You can find all Postgres information into your Neon account where a new project has been deployed by Terraform (project should be `kestra_elt` and database branch is `prod`).
 
-6️⃣ Restart the Kestra instance configuraiton is updated.
+6️⃣ Restart the Kestra instance configuration is updated.
+
+
+> If you don't want to use Terraform, you can fill the `.env` file like mentioned before. You deploy Kestra flows by importing them in the UI directly (Tips: Compress the `./flows` folder into a ZIP archive, then import it via the button "Flows > Import").
+
 
 ## Run backfill
 
